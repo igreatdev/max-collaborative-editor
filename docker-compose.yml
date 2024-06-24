@@ -1,0 +1,66 @@
+services:
+  frontend:
+    container_name: max-test-frontend
+    build: ./frontend
+    ports:
+      - 8099:8099
+    environment:
+      - APP_PORT=8098
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: unless-stopped
+    depends_on:
+      - api
+    command: sh -c "yarn dev"
+   
+  api:
+    container_name: api
+    build: ./api
+    ports:
+      - 5001:5001
+    environment:
+      - APP_PORT=5001
+      - DB_SCHEMA=public
+      - DB_HOST=postgres
+      - DB_USER=pg-user
+      - DB_PASSWORD=pg-pass
+      - DB_NAME=max-test
+      - DB_PORT=5432
+    volumes:
+      - ./api:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    command: sh -c "yarn run migrate:up && yarn start:dev"
+   
+  postgres:
+    container_name: postgres-db
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=pg-user
+      - POSTGRES_PASSWORD=pg-pass
+      - POSTGRES_DB=max-test
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+      PGADMIN_DEFAULT_PASSWORD: strong-password
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+
+volumes:
+  postgres_data: {}
+  pgadmin_data: {}
